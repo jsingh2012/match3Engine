@@ -42,6 +42,7 @@ class Grid
 	static Grid *instance;
 	int rowCount;
 	int colCount;
+	int maxTypeOfTiles;
 	
 	public:
 	Grid(const int _rowCount ,const int _colCount )
@@ -53,11 +54,16 @@ class Grid
 
 	void printGrid()
 	{
-		for(int i = 0 ; i < rowCount; i++)
+	for(int i = 0 ; i < rowCount; i++)
 		{
+			#define PRINTC(c,f,s) printf ("\033[%dm" f "\033[0m", 30 + c, s)
 			for(int j = 0; j < colCount; j++)
 			{
-				printf("(%2d,%2d)%2d ",i,j, grid[i][j].type);
+				//printf("[%d,%d]",i,j);
+				if(grid[i][j].type == 0)
+					PRINTC(grid[i][j].type, " ", grid[i][j].type);
+				else
+					PRINTC(grid[i][j].type, "%2d", grid[i][j].type);
 			}
 			printf("\n");
 		}
@@ -66,12 +72,13 @@ class Grid
 
 	void fillTheGrid(int maxDiffTileType)
 	{
+		maxTypeOfTiles = maxDiffTileType;
 		std::srand(std::time(0));
 		for(int i = 0 ; i < rowCount; i++)
 		{
 			for(int j = 0; j < colCount; j++)
 			{
-				grid[i][j].type = std::rand() % maxDiffTileType;
+				grid[i][j].type = std::rand() % maxDiffTileType + 1;
 				grid[i][j].posX = i;
 				grid[i][j].posY = j;
 			}
@@ -86,18 +93,24 @@ class Grid
 			{
 				bool matched = false;
 				vector <node*> matchesNodes;
-				printf("START getMatchAtPos at := %2d %2d := \n", i, j);
+				//printf("START getMatchAtPos at := %2d %2d := \n", i, j);
 				matchesNodes = getMatchAtPos(i, j);
 				for (auto&& node : matchesNodes)
 				{
 					printf("%d ", node->type);
 					matched = true;
 				}
-				printf("\n");
 				if(matched)
+				{
+					printf("\n");
+					destoryMatchedNodes(matchesNodes);
 					printGrid();
+					printf("\n");
+					fillEmptySpaces();
+					printGrid();
+					printf("\n");
+				}
 				matched = false;	
-			printf("END\n");
 			}
 		}
 		
@@ -161,6 +174,55 @@ class Grid
 			}
 		}
 		return matchedNode;
+	}
+
+	void destoryMatchedNodes(vector<node*> matchedNodes)
+	{
+		for(auto&&  node: matchedNodes)
+			node->type = 0;
+	}
+
+	void fillEmptySpaces()
+	{
+		while(countOfEmptySpaces() > 0)
+		{
+			moveTilesDownWard();
+		}		
+	}
+
+	int countOfEmptySpaces()
+	{
+		int count = 0;
+		for(int i = 0 ; i < rowCount; i++)
+		{
+			for(int j = 0; j < colCount; j++)
+			{
+				if(grid[i][j].type == 0)
+					count++;	
+			}
+		}
+		return count;
+	}
+
+	void moveTilesDownWard()
+	{
+		for(int i = 0 ; i < rowCount; i++)
+                {
+                        for(int j = 0; j < colCount; j++)
+			{
+				if(i == 0 && grid[i][j].type == 0)
+				{
+					grid[i][j].type = std::rand() % maxTypeOfTiles + 1;
+					continue;
+				}				
+				if(grid[i][j].type == 0)
+				{
+					grid[i][j].type = grid[i-1][j].type;
+					grid[i-1][j].type = 0;
+				}
+
+                        }
+                }
 	}
 };
 
